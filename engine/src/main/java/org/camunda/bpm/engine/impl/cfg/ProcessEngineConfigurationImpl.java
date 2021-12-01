@@ -2405,8 +2405,8 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
   }
 
   protected void initDefaultMetrics(MetricsRegistry metricsRegistry) {
-    metricsRegistry.createMeter(Metrics.ACTIVTY_INSTANCE_START);
-    metricsRegistry.createDbMeter(Metrics.ACTIVTY_INSTANCE_END);
+    metricsRegistry.createMeter(Metrics.FLOW_NODE_INSTANCES_START);
+    metricsRegistry.createDbMeter(Metrics.FLOW_NODE_INSTANCES_END);
 
     metricsRegistry.createDbMeter(Metrics.JOB_ACQUISITION_ATTEMPT);
     metricsRegistry.createDbMeter(Metrics.JOB_ACQUIRED_SUCCESS);
@@ -2416,9 +2416,9 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
     metricsRegistry.createDbMeter(Metrics.JOB_LOCKED_EXCLUSIVE);
     metricsRegistry.createDbMeter(Metrics.JOB_EXECUTION_REJECTED);
 
-    metricsRegistry.createMeter(Metrics.ROOT_PROCESS_INSTANCE_START);
+    metricsRegistry.createMeter(Metrics.PROCESS_INSTANCES);
 
-    metricsRegistry.createMeter(Metrics.EXECUTED_DECISION_INSTANCES);
+    metricsRegistry.createMeter(Metrics.DECISION_INSTANCES);
     metricsRegistry.createMeter(Metrics.EXECUTED_DECISION_ELEMENTS);
   }
 

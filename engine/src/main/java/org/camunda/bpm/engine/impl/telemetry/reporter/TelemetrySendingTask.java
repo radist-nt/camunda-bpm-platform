@@ -16,25 +16,6 @@
  */
 package org.camunda.bpm.engine.impl.telemetry.reporter;
 
-import static org.camunda.bpm.engine.impl.util.ConnectUtil.METHOD_NAME_POST;
-import static org.camunda.bpm.engine.impl.util.ConnectUtil.PARAM_NAME_RESPONSE_STATUS_CODE;
-import static org.camunda.bpm.engine.impl.util.ConnectUtil.addRequestTimeoutConfiguration;
-import static org.camunda.bpm.engine.impl.util.ConnectUtil.assembleRequestParameters;
-import static org.camunda.bpm.engine.impl.util.StringUtil.hasText;
-import static org.camunda.bpm.engine.management.Metrics.ACTIVTY_INSTANCE_START;
-import static org.camunda.bpm.engine.management.Metrics.EXECUTED_DECISION_ELEMENTS;
-import static org.camunda.bpm.engine.management.Metrics.EXECUTED_DECISION_INSTANCES;
-import static org.camunda.bpm.engine.management.Metrics.ROOT_PROCESS_INSTANCE_START;
-
-import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimerTask;
-
-import javax.ws.rs.core.MediaType;
-
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
 import org.camunda.bpm.engine.impl.cmd.IsTelemetryEnabledCmd;
@@ -42,6 +23,7 @@ import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.interceptor.CommandExecutor;
 import org.camunda.bpm.engine.impl.metrics.Meter;
 import org.camunda.bpm.engine.impl.metrics.MetricsRegistry;
+import org.camunda.bpm.engine.impl.metrics.util.MetricsUtil;
 import org.camunda.bpm.engine.impl.persistence.entity.PropertyEntity;
 import org.camunda.bpm.engine.impl.telemetry.CommandCounter;
 import org.camunda.bpm.engine.impl.telemetry.TelemetryLogger;
@@ -55,9 +37,24 @@ import org.camunda.bpm.engine.impl.telemetry.dto.Product;
 import org.camunda.bpm.engine.impl.util.ExceptionUtil;
 import org.camunda.bpm.engine.impl.util.JsonUtil;
 import org.camunda.bpm.engine.impl.util.TelemetryUtil;
+import org.camunda.bpm.engine.management.Metrics;
 import org.camunda.connect.spi.CloseableConnectorResponse;
 import org.camunda.connect.spi.Connector;
 import org.camunda.connect.spi.ConnectorRequest;
+
+import javax.ws.rs.core.MediaType;
+import java.net.HttpURLConnection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimerTask;
+
+import static org.camunda.bpm.engine.impl.util.ConnectUtil.METHOD_NAME_POST;
+import static org.camunda.bpm.engine.impl.util.ConnectUtil.PARAM_NAME_RESPONSE_STATUS_CODE;
+import static org.camunda.bpm.engine.impl.util.ConnectUtil.addRequestTimeoutConfiguration;
+import static org.camunda.bpm.engine.impl.util.ConnectUtil.assembleRequestParameters;
+import static org.camunda.bpm.engine.impl.util.StringUtil.hasText;
 
 public class TelemetrySendingTask extends TimerTask {
 
@@ -67,10 +64,10 @@ public class TelemetrySendingTask extends TimerTask {
   protected static final String UUID4_PATTERN = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}";
 
   static {
-    METRICS_TO_REPORT.add(ROOT_PROCESS_INSTANCE_START);
-    METRICS_TO_REPORT.add(EXECUTED_DECISION_INSTANCES);
-    METRICS_TO_REPORT.add(EXECUTED_DECISION_ELEMENTS);
-    METRICS_TO_REPORT.add(ACTIVTY_INSTANCE_START);
+    METRICS_TO_REPORT.add(Metrics.PROCESS_INSTANCES);
+    METRICS_TO_REPORT.add(Metrics.DECISION_INSTANCES);
+    METRICS_TO_REPORT.add(Metrics.EXECUTED_DECISION_ELEMENTS);
+    METRICS_TO_REPORT.add(Metrics.FLOW_NODE_INSTANCES_START);
   }
 
   protected CommandExecutor commandExecutor;
@@ -301,6 +298,10 @@ public class TelemetrySendingTask extends TimerTask {
       for (String metricToReport : METRICS_TO_REPORT) {
         long value = telemetryMeters.get(metricToReport).getAndClear();
         metrics.put(metricToReport, new Metric(value));
+
+        // add internal names for backward compatibility
+        final String internalName = MetricsUtil.resolveInternalName(metricToReport);
+        metrics.put(internalName, new Metric(value));
       }
     }
 
